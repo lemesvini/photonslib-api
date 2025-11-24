@@ -2,17 +2,77 @@ import "dotenv/config";
 import fastify from "fastify";
 import jwt from "@fastify/jwt";
 import cookie from "@fastify/cookie";
+import swagger from "@fastify/swagger";
+import swaggerUi from "@fastify/swagger-ui";
+import { withRefResolver } from "fastify-zod";
+import packageJson from "../package.json";
 import userRoutes from "./modules/user/user.route";
 import authRoutes from "./modules/auth/auth.route";
-import classRoutes from "./modules/class/class.route";
-import contentsRoutes from "./modules/contents/contents.route";
-import lessonRoutes from "./modules/lesson/lesson.route";
-import dashboardRoutes from "./modules/dashboard/dashboard.route";
-import paymentRoutes from "./modules/payment/payment.route";
 import { authenticateUser } from "./middleware/auth.middleware";
 
 const app = fastify({
   logger: true,
+});
+
+const swaggerRoutePrefix = (() => {
+  const route = process.env.SWAGGER_ROUTE_PREFIX;
+  if (!route || route.length === 0) {
+    return "/docs";
+  }
+
+  return route.startsWith("/") ? route : `/${route}`;
+})();
+
+const defaultServerUrl =
+  process.env.SWAGGER_SERVER_URL ||
+  `http://localhost:${process.env.PORT || "3000"}`;
+
+app.register(
+  swagger,
+  withRefResolver({
+    openapi: {
+      info: {
+        title: packageJson.name || "Photonslib API",
+        description:
+          packageJson.description ||
+          "HTTP API powering the Photonslib platform",
+        version: packageJson.version || "1.0.0",
+      },
+      servers: [
+        {
+          url: defaultServerUrl,
+          description: process.env.SWAGGER_SERVER_URL
+            ? "Configured server"
+            : "Local development server",
+        },
+      ],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: "http",
+            scheme: "bearer",
+            bearerFormat: "JWT",
+          },
+          refreshTokenCookie: {
+            type: "apiKey",
+            in: "cookie",
+            name: "refreshToken",
+          },
+        },
+      },
+      security: [{ bearerAuth: [] }],
+    },
+    hideUntagged: false,
+  })
+);
+
+app.register(swaggerUi, {
+  routePrefix: swaggerRoutePrefix,
+  uiConfig: {
+    docExpansion: "list",
+    deepLinking: true,
+  },
+  staticCSP: true,
 });
 
 // Add global hook to handle CORS manually
@@ -84,11 +144,6 @@ app.get("/test", async () => {
 const start = async () => {
   app.register(authRoutes, { prefix: "/api/auth" });
   app.register(userRoutes, { prefix: "/api/users" });
-  app.register(classRoutes, { prefix: "/api/classes" });
-  app.register(contentsRoutes, { prefix: "/api/contents" });
-  app.register(lessonRoutes, { prefix: "/api/lessons" });
-  app.register(dashboardRoutes, { prefix: "/api/dashboard" });
-  app.register(paymentRoutes, { prefix: "/api/payments" });
   try {
     const port = parseInt(process.env.PORT || "3000", 10);
     const host =
@@ -96,6 +151,9 @@ const start = async () => {
 
     await app.listen({ port, host: "0.0.0.0" });
     console.log(`🚀 Server is running on http://${host}:${port}`);
+    console.log(
+      `📘 Swagger UI available at http://${host}:${port}${swaggerRoutePrefix}`
+    );
   } catch (err) {
     app.log.error(err);
     process.exit(1);
