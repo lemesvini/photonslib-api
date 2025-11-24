@@ -26,6 +26,7 @@ model Page {
   aiDesc      String?  @db.Text
   image       String?  // Full-size image URL
   thumbnail   String?  // Thumbnail URL
+  createdDate DateTime
   
   // Nesting structure
   parentId    Int?
