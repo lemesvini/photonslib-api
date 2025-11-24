@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  fullName  String
+  role      Role
+  salt      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Page {
+  id          Int      @id @default(autoincrement())
+  title       String
+  content     String?  @db.Text
+  aiDesc      String?  @db.Text
+  image       String?  // Full-size image URL
+  thumbnail   String?  // Thumbnail URL
+  
+  // Nesting structure
+  parentId    Int?
+  parent      Page?    @relation("PageHierarchy", fields: [parentId], references: [id], onDelete: Cascade)
+  children    Page[]   @relation("PageHierarchy")
+  
+  // Relations
+  tags        Tag[]    @relation("PageTags")
+  
+  // Metadata
+  order       Int      @default(0)  // For sorting within parent
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([parentId])
+  @@map("pages")
+}
+
+model Tag {
+  id    Int    @id @default(autoincrement())
+  name  String @unique
+  color String @default("#gray") // For UI styling
+  pages Page[] @relation("PageTags")
+
+  @@map("tags")
+}
+
+enum Role {
+  ADMIN
+  GUEST
+}
