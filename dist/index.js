@@ -7,16 +7,67 @@ require("dotenv/config");
 const fastify_1 = __importDefault(require("fastify"));
 const jwt_1 = __importDefault(require("@fastify/jwt"));
 const cookie_1 = __importDefault(require("@fastify/cookie"));
+const swagger_1 = __importDefault(require("@fastify/swagger"));
+const swagger_ui_1 = __importDefault(require("@fastify/swagger-ui"));
+const fastify_zod_1 = require("fastify-zod");
+const package_json_1 = __importDefault(require("../package.json"));
 const user_route_1 = __importDefault(require("./modules/user/user.route"));
 const auth_route_1 = __importDefault(require("./modules/auth/auth.route"));
-const class_route_1 = __importDefault(require("./modules/class/class.route"));
-const contents_route_1 = __importDefault(require("./modules/contents/contents.route"));
-const lesson_route_1 = __importDefault(require("./modules/lesson/lesson.route"));
-const dashboard_route_1 = __importDefault(require("./modules/dashboard/dashboard.route"));
-const payment_route_1 = __importDefault(require("./modules/payment/payment.route"));
+const page_route_1 = __importDefault(require("./modules/page/page.route"));
 const auth_middleware_1 = require("./middleware/auth.middleware");
 const app = (0, fastify_1.default)({
     logger: true,
+});
+const swaggerRoutePrefix = (() => {
+    const route = process.env.SWAGGER_ROUTE_PREFIX;
+    if (!route || route.length === 0) {
+        return "/docs";
+    }
+    return route.startsWith("/") ? route : `/${route}`;
+})();
+const defaultServerUrl = process.env.SWAGGER_SERVER_URL ||
+    `http://localhost:${process.env.PORT || "3000"}`;
+app.register(swagger_1.default, (0, fastify_zod_1.withRefResolver)({
+    openapi: {
+        info: {
+            title: package_json_1.default.name || "Photonslib API",
+            description: package_json_1.default.description ||
+                "HTTP API powering the Photonslib platform",
+            version: package_json_1.default.version || "1.0.0",
+        },
+        servers: [
+            {
+                url: defaultServerUrl,
+                description: process.env.SWAGGER_SERVER_URL
+                    ? "Configured server"
+                    : "Local development server",
+            },
+        ],
+        components: {
+            securitySchemes: {
+                bearerAuth: {
+                    type: "http",
+                    scheme: "bearer",
+                    bearerFormat: "JWT",
+                },
+                refreshTokenCookie: {
+                    type: "apiKey",
+                    in: "cookie",
+                    name: "refreshToken",
+                },
+            },
+        },
+        security: [{ bearerAuth: [] }],
+    },
+    hideUntagged: false,
+}));
+app.register(swagger_ui_1.default, {
+    routePrefix: swaggerRoutePrefix,
+    uiConfig: {
+        docExpansion: "list",
+        deepLinking: true,
+    },
+    staticCSP: true,
 });
 // Add global hook to handle CORS manually
 app.addHook("onRequest", async (request, reply) => {
@@ -25,10 +76,11 @@ app.addHook("onRequest", async (request, reply) => {
     const allowedOrigins = [
         "http://localhost:3000",
         "http://localhost:5173",
-        "https://async-app-omega.vercel.app"
+        "https://async-app-omega.vercel.app",
     ];
     // Check if origin is allowed or matches Vercel pattern
-    if (origin && (allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin))) {
+    if (origin &&
+        (allowedOrigins.includes(origin) || /\.vercel\.app$/.test(origin))) {
         reply.header("Access-Control-Allow-Origin", origin);
     }
     else if (!origin) {
@@ -69,16 +121,13 @@ app.get("/test", async () => {
 const start = async () => {
     app.register(auth_route_1.default, { prefix: "/api/auth" });
     app.register(user_route_1.default, { prefix: "/api/users" });
-    app.register(class_route_1.default, { prefix: "/api/classes" });
-    app.register(contents_route_1.default, { prefix: "/api/contents" });
-    app.register(lesson_route_1.default, { prefix: "/api/lessons" });
-    app.register(dashboard_route_1.default, { prefix: "/api/dashboard" });
-    app.register(payment_route_1.default, { prefix: "/api/payments" });
+    app.register(page_route_1.default, { prefix: "/api/pages" });
     try {
         const port = parseInt(process.env.PORT || "3000", 10);
         const host = process.env.NODE_ENV === "production" ? "0.0.0.0" : "localhost";
         await app.listen({ port, host: "0.0.0.0" });
         console.log(`🚀 Server is running on http://${host}:${port}`);
+        console.log(`📘 Swagger UI available at http://${host}:${port}${swaggerRoutePrefix}`);
     }
     catch (err) {
         app.log.error(err);

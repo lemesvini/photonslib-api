@@ -9,14 +9,8 @@ export declare const registerSchema: z.ZodObject<{
     fullName: z.ZodString;
     role: z.ZodEnum<{
         ADMIN: "ADMIN";
-        CONSULTANT: "CONSULTANT";
-        STUDENT: "STUDENT";
+        GUEST: "GUEST";
     }>;
-    phone: z.ZodOptional<z.ZodString>;
-    birthDate: z.ZodOptional<z.ZodString>;
-    address: z.ZodOptional<z.ZodString>;
-    emergencyContact: z.ZodOptional<z.ZodString>;
-    notes: z.ZodOptional<z.ZodString>;
 }, z.core.$strip>;
 export declare const changePasswordSchema: z.ZodObject<{
     currentPassword: z.ZodString;

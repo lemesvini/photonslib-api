@@ -56,7 +56,7 @@ async function registerUser(input) {
         throw new Error("User with this email already exists");
     }
     // Hash password
-    const { password, birthDate, ...rest } = input;
+    const { password, ...rest } = input;
     const { hash, salt } = (0, hash_1.hashPassword)(password);
     // Create user
     const user = await prisma_1.default.user.create({
@@ -64,7 +64,6 @@ async function registerUser(input) {
             ...rest,
             password: hash,
             salt,
-            birthDate: birthDate ? new Date(birthDate) : null,
         },
         select: {
             id: true,
