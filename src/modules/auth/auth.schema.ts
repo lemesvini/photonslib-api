@@ -11,12 +11,7 @@ export const registerSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(6, "Password must be at least 6 characters"),
   fullName: z.string().min(1, "Full name is required"),
-  role: z.enum(["ADMIN", "CONSULTANT", "STUDENT"]),
-  phone: z.string().optional(),
-  birthDate: z.string().datetime().optional(),
-  address: z.string().optional(),
-  emergencyContact: z.string().optional(),
-  notes: z.string().optional(),
+  role: z.enum(["ADMIN", "GUEST"]),
 });
 
 // Change password schema

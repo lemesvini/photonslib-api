@@ -88,7 +88,7 @@ export async function getUsers(query: any = {}) {
   const totalPages = Math.ceil(total / limit);
 
   // Convert dates to ISO strings
-  const serializedUsers = users.map((user) => ({
+  const serializedUsers = users.map((user: any) => ({
     ...user,
     createdAt: user.createdAt.toISOString(),
     updatedAt: user.updatedAt.toISOString(),

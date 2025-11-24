@@ -77,7 +77,7 @@ export async function registerUser(
   }
 
   // Hash password
-  const { password, birthDate, ...rest } = input;
+  const { password, ...rest } = input;
   const { hash, salt } = hashPassword(password);
 
   // Create user
@@ -86,7 +86,6 @@ export async function registerUser(
       ...rest,
       password: hash,
       salt,
-      birthDate: birthDate ? new Date(birthDate) : null,
     },
     select: {
       id: true,
