@@ -40,6 +40,7 @@ function serializePage(page: PageWithRelations) {
     aiDesc: page.aiDesc ?? null,
     image: page.image ?? null,
     thumbnail: page.thumbnail ?? null,
+    createdDate: page.createdAt.toISOString(),
     parentId: page.parentId ?? null,
     order: page.order,
     tags: page.tags.map((tag) => ({
