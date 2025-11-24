@@ -8,6 +8,7 @@ import { withRefResolver } from "fastify-zod";
 import packageJson from "../package.json";
 import userRoutes from "./modules/user/user.route";
 import authRoutes from "./modules/auth/auth.route";
+import pageRoutes from "./modules/page/page.route";
 import { authenticateUser } from "./middleware/auth.middleware";
 
 const app = fastify({
@@ -144,6 +145,7 @@ app.get("/test", async () => {
 const start = async () => {
   app.register(authRoutes, { prefix: "/api/auth" });
   app.register(userRoutes, { prefix: "/api/users" });
+  app.register(pageRoutes, { prefix: "/api/pages" });
   try {
     const port = parseInt(process.env.PORT || "3000", 10);
     const host =
